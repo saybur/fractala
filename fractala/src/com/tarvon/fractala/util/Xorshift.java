@@ -38,7 +38,7 @@ import com.google.common.base.Stopwatch;
  * This particular implementation has a period of <code>2 ^ 96 - 1</code> and
  * uses Marsaglia's triple of [13, 19, 3]. For use in cellular noise functions,
  * it has a method for resetting the generator state via
- * {@link #setSeed(long, long, long)} for <code>x, y, z</code> voxel
+ * {@link Instance#setSeed(long, long, long)} for <code>x, y, z</code> voxel
  * coordinates, which will wrap on [0, 1024) for each of <code>x, y, z</code>.
  * <p>
  * Objects of <code>Xorshift.Instance</code> <i>are not</i> threadsafe.

@@ -108,7 +108,7 @@ public class Fractals
 	}
 	
 	/**
-	 * Provides a random origin {@link Vector}.
+	 * Provides a random origin {@link Point3D}.
 	 * 
 	 * @return a random origin.
 	 */
@@ -121,7 +121,7 @@ public class Fractals
 	}
 	
 	/**
-	 * Provides a random origin {@link Vector} using the provided random number
+	 * Provides a random origin {@link Point3D} using the provided random number
 	 * generator.
 	 * 
 	 * @param random
