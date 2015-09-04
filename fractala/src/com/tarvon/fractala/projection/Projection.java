@@ -145,7 +145,7 @@ public interface Projection extends Callable<Matrix>
 		}
 
 		@Override
-		public Matrix call() throws Exception
+		public Matrix call()
 		{
 			final int power = projection.getPower();
 			Preconditions.checkArgument(power > 0, "projection's power value "
