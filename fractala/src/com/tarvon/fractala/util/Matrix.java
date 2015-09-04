@@ -134,9 +134,10 @@ public class Matrix
 		 *             if the provided x, y values are outside the bounds of the
 		 *             array.
 		 */
-		public void set(int x, int y, double v)
+		public Builder set(int x, int y, double v)
 		{
 			data[y * width + x] = v;
+			return this;
 		}
 	}
 	
@@ -588,7 +589,7 @@ public class Matrix
 	 * For a basic color picker implementation that hides some of the gory
 	 * details of this method, see {@link ColorChooser}.
 	 * 
-	 * @param color
+	 * @param converter
 	 *            the color generation function as described, which must be
 	 *            non-interfering for parallel usage (as described).
 	 * @return the constructed image.
