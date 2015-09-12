@@ -27,6 +27,7 @@ import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
 
 import com.google.common.base.Preconditions;
+import com.tarvon.fractala.noise.CellularNoise;
 import com.tarvon.fractala.noise.SimplexNoise;
 import com.tarvon.fractala.projection.Fractal;
 import com.tarvon.fractala.util.Point3D;
@@ -57,6 +58,55 @@ public class Fractals
 	 * For details, see {@link Fractal.Builder#usePersistance(double)}.
 	 */
 	public static final double DEFAULT_PERSISTENCE = 0.5;
+	
+	/**
+	 * Creates a new fractal sourced from {@link SimplexNoise}, using default
+	 * values.
+	 * 
+	 * @param power
+	 *            the power of 2 that controls the dimensions of the result
+	 *            fractal.
+	 * @return the fractal.
+	 */
+	public static Fractal createCellularFractal(int power)
+	{
+		pool.populate(power);
+		final Point3D origin = randomOrigin();
+		return Fractal.builder()
+				.usePool(pool)
+				.usePower(power)
+				.useNoiseSource(CellularNoise.getInstance())
+				.useOrigin(origin)
+				.usePersistance(DEFAULT_PERSISTENCE)
+				.useOctaves(DEFAULT_OCTAVES)
+				.create();
+	}
+	
+	/**
+	 * Creates a new fractal sourced from {@link CellularNoise}, using default
+	 * values, and a seed value to control output.
+	 * 
+	 * @param seed
+	 *            the seed value to use for this fractal.
+	 * @param power
+	 *            the power of 2 that controls the dimensions of the result
+	 *            fractal.
+	 * @return the fractal.
+	 */
+	public static Fractal createCellularFractal(long seed, int power)
+	{
+		pool.populate(power);
+		final Random random = new Random();
+		final Point3D origin = randomOrigin(random);
+		return Fractal.builder()
+				.usePool(pool)
+				.usePower(power)
+				.useNoiseSource(CellularNoise.getInstance())
+				.useOrigin(origin)
+				.usePersistance(DEFAULT_PERSISTENCE)
+				.useOctaves(DEFAULT_OCTAVES)
+				.create();
+	}
 	
 	/**
 	 * Creates a new fractal sourced from {@link SimplexNoise}, using default
