@@ -470,7 +470,7 @@ public class Matrix
 	
 	/**
 	 * Provides a copy of this matrix with every data value normalized on [0.0,
-	 * -1.0].
+	 * 1.0].
 	 * 
 	 * @return the normalized copy of this matrix.
 	 */
