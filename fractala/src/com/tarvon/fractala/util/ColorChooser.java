@@ -333,27 +333,38 @@ public final class ColorChooser implements DoubleToIntFunction
 	public int applyAsInt(double value)
 	{
 		// get the appropriate index by binary search for log(n) performance
-		int i = Math.abs(Arrays.binarySearch(keys, value) + 1) - 1;
+		final int i = Arrays.binarySearch(keys, value);
 		
-		if(i <= 0)
+		if(i >= 0)
 		{
-			// below all colors
-			return colors[0];
-		}
-		else if(i >= count - 1)
-		{
-			// above all colors
-			return colors[count - 1];
+			// dead-on match, just return
+			return colors[i];
 		}
 		else
 		{
-			// in between, blend between neighbors
-			double key = keys[i];
-			double nextKey = keys[i + 1];
-			int color = colors[i];
-			int nextColor = colors[i + 1];
-			double ratio = (value - key) / (nextKey - key);
-			return blend(nextColor, color, ratio);
+			// non direct match, adjust index
+			final int ai = -1 * (i + 1);
+			
+			if(ai == 0)
+			{
+				// below all colors
+				return colors[0];
+			}
+			if(ai >= count)
+			{
+				// above all colors
+				return colors[count - 1];
+			}
+			else
+			{
+				// in between, blend between neighbors
+				double pKey = keys[ai - 1];
+				double nKey = keys[ai];
+				int pColor = colors[ai - 1];
+				int nColor = colors[ai];
+				double ratio = (value - pKey) / (nKey - pKey);
+				return blend(nColor, pColor, ratio);
+			}
 		}
 	}
 	
