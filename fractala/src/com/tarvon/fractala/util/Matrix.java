@@ -30,6 +30,7 @@ import java.util.Arrays;
 import java.util.Spliterator;
 import java.util.function.DoubleToIntFunction;
 import java.util.function.DoubleUnaryOperator;
+import java.util.function.ToDoubleBiFunction;
 import java.util.function.ToDoubleFunction;
 import java.util.stream.DoubleStream;
 import java.util.stream.StreamSupport;
@@ -56,47 +57,11 @@ import static com.google.common.base.Preconditions.*;
 public class Matrix
 {
 	/**
-	 * Sets the matrix to the given value at the given index.
-	 * 
-	 * @param x
-	 *            the X coordinate of the matrix to set.
-	 * @param y
-	 *            the Y coordinate of the matrix to set.
-	 * @param v
-	 *            the value to set.
-	 * @return the previous value at the position.
-	 * @throws ArrayIndexOutOfBoundsException
-	 *             if the provided x, y values are outside the bounds of the
-	 *             array.
-	 */
-	public double set(int x, int y, double v)
-	{
-		final int index = y * width + x;
-		final double old = data[index];
-		data[index] = v;
-		return old;
-	}
-	
-	/**
 	 * Defines the maximum number of values that a {@link Matrix} can store.
 	 * <p>
 	 * Per https://stackoverflow.com/questions/3038392
 	 */
 	public static final int MAX_SIZE = Integer.MAX_VALUE - 5;
-	
-	/**
-	 * Averages the values in each cell of the given matrices.
-	 * 
-	 * @param first
-	 *            the first matrix.
-	 * @param others
-	 *            any additional matrices to average.
-	 * @return the result.
-	 */
-	public static Matrix average(Matrix first, Matrix... others)
-	{
-		return apply(v -> v.average().getAsDouble(), first, others);
-	}
 	
 	/**
 	 * Applies the given function to the provided matrices, providing the result
@@ -163,6 +128,20 @@ public class Matrix
 	}
 	
 	/**
+	 * Averages the values in each cell of the given matrices.
+	 * 
+	 * @param first
+	 *            the first matrix.
+	 * @param others
+	 *            any additional matrices to average.
+	 * @return the result.
+	 */
+	public static Matrix average(Matrix first, Matrix... others)
+	{
+		return apply(v -> v.average().getAsDouble(), first, others);
+	}
+	
+	/**
 	 * Creates a matrix of the given size. All values will be initialized to
 	 * 0.0.
 	 * 
@@ -200,7 +179,7 @@ public class Matrix
 	private final int height;
 	private final int size;
 	private final double[] data;
-
+	
 	private Matrix(int widthPassed, int heightPassed, double[] dataPassed)
 	{
 		width = widthPassed;
@@ -219,7 +198,7 @@ public class Matrix
 						+ "but width/height indicated size should be %s",
 				data.length, size);
 	}
-	
+
 	/**
 	 * Applies the given operator to each value of the <code>Matrix</code>, in
 	 * order.
@@ -234,6 +213,29 @@ public class Matrix
 		
 		for(int i = 0; i < data.length; i++)
 			data[i] = operator.applyAsDouble(data[i]);
+		return this;
+	}
+	
+	/**
+	 * Applies the given operator to each value of the <code>Matrix</code>, in
+	 * order.
+	 * <p>
+	 * The function is given a <code>double</code> value that is the current
+	 * value at the given position, and a <code>int</code> array index position.
+	 * The index-less version of this method is
+	 * {@link #apply(DoubleUnaryOperator)}, which avoids boxing values. The
+	 * return value of the function is saved to each index of the backing array.
+	 * 
+	 * @param function
+	 *            the function to apply, as described.
+	 * @return this object, for chaining calls.
+	 */
+	public Matrix apply(ToDoubleBiFunction<Double, Integer> function)
+	{
+		checkNotNull(function, "function");
+		
+		for(int i = 0; i < data.length; i++)
+			data[i] = function.applyAsDouble(data[i], i);
 		return this;
 	}
 	
@@ -256,14 +258,6 @@ public class Matrix
 	}
 	
 	/**
-	 * @return the size of this <code>Matrix</code>.
-	 */
-	public int size()
-	{
-		return size;
-	}
-	
-	/**
 	 * @return the height of this <code>Matrix</code>.
 	 */
 	public int getHeight()
@@ -278,7 +272,7 @@ public class Matrix
 	{
 		return width;
 	}
-
+	
 	/**
 	 * Provides the array index of a particular two-dimensional grid coordinate.
 	 * <p>
@@ -297,7 +291,7 @@ public class Matrix
 	{
 		return y * width + x;
 	}
-
+	
 	/**
 	 * Provides the maximum value of this table.
 	 * <p>
@@ -321,7 +315,7 @@ public class Matrix
 	{
 		return stream().min().getAsDouble();
 	}
-	
+
 	/**
 	 * Adjusts this matrix such that every data value is normalized on [0.0,
 	 * 1.0].
@@ -338,7 +332,7 @@ public class Matrix
 			data[i] = (data[i] - min) / dataRange;
 		return this;
 	}
-	
+
 	/**
 	 * Adjusts this matrix such that the minimum data value is equal to the
 	 * provided low value, the maximum data value is equal to the provided high
@@ -367,6 +361,36 @@ public class Matrix
 		for(int i = 0; i < size; i++)
 			data[i] = (data[i] - min) / dataRange * outRange + low;
 		return this;
+	}
+	
+	/**
+	 * Sets the matrix to the given value at the given index.
+	 * 
+	 * @param x
+	 *            the X coordinate of the matrix to set.
+	 * @param y
+	 *            the Y coordinate of the matrix to set.
+	 * @param v
+	 *            the value to set.
+	 * @return the previous value at the position.
+	 * @throws ArrayIndexOutOfBoundsException
+	 *             if the provided x, y values are outside the bounds of the
+	 *             array.
+	 */
+	public double set(int x, int y, double v)
+	{
+		final int index = y * width + x;
+		final double old = data[index];
+		data[index] = v;
+		return old;
+	}
+	
+	/**
+	 * @return the size of this <code>Matrix</code>.
+	 */
+	public int size()
+	{
+		return size;
 	}
 	
 	/**
