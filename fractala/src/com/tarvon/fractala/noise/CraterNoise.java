@@ -11,7 +11,7 @@ import com.tarvon.fractala.util.Xorshift;
  * Implements a random placement crater system for fractal surfaces. This is
  * useful when creating planets that have been subject to meteor bombardment
  * that is still visible as the &quot;ring of rock&quot; element. This code is
- * derived from my port of Matt Phar's {@link CraterNoise}, which itself
+ * derived from my port of Matt Phar's {@link CellularNoise}, which itself
  * implements Steve Worley's cellular noise. This version, instead of reading
  * cellular minimum distance, instead treats voxel coordinates as an impact
  * crater and tries to determine the value based on the distance from the
@@ -141,7 +141,7 @@ public final class CraterNoise implements NoiseSource
 		distance = distance * magnitude;
 		if(distance > 0.5)
 		{
-			return Math.max(1 - Math.abs((distance - 0.5) * 8), 0.0);
+			return Math.max(1 - Math.abs((distance - 0.5) * 3), 0.0);
 		}
 		else
 		{
