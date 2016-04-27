@@ -88,12 +88,12 @@ public interface Projection extends Callable<Matrix>
 		private final class TaskAction extends RecursiveAction
 		{
 			private static final long serialVersionUID = -3229497413493883470L;
-			private final Matrix.Builder data;
+			private final Matrix data;
 			private final int low;
 			
 			private final int high;
 			
-			private TaskAction(Matrix.Builder data, int low, int high)
+			private TaskAction(Matrix data, int low, int high)
 			{
 				this.data = data;
 				this.low = low;
@@ -154,13 +154,13 @@ public interface Projection extends Callable<Matrix>
 			// create the result data object
 			final int width = (int) Math.pow(2, power);
 			final int height = (int) Math.pow(2, power - 1);
-			final Matrix.Builder data = Matrix.of(width, height);
+			final Matrix data = Matrix.of(width, height);
 
 			// fill it with data
 			TaskAction action = new TaskAction(data, 0, width);
 			ForkJoinPool pool = ForkJoinPool.commonPool();
 			pool.invoke(action);
-			return data.create();
+			return data;
 		}
 	}
 	
