@@ -226,13 +226,15 @@ public class Matrix
 	 * 
 	 * @param operator
 	 *            the operator to apply.
+	 * @return this object, for chaining calls.
 	 */
-	public void apply(DoubleUnaryOperator operator)
+	public Matrix apply(DoubleUnaryOperator operator)
 	{
 		checkNotNull(operator, "operator");
 		
 		for(int i = 0; i < data.length; i++)
 			data[i] = operator.applyAsDouble(data[i]);
+		return this;
 	}
 	
 	/**
@@ -323,8 +325,10 @@ public class Matrix
 	/**
 	 * Adjusts this matrix such that every data value is normalized on [0.0,
 	 * 1.0].
+	 * 
+	 * @return this object, for chaining calls.
 	 */
-	public void normalize()
+	public Matrix normalize()
 	{
 		final double max = max();
 		final double min = min();
@@ -332,6 +336,7 @@ public class Matrix
 		
 		for(int i = 0; i < size; i++)
 			data[i] = (data[i] - min) / dataRange;
+		return this;
 	}
 	
 	/**
@@ -343,8 +348,9 @@ public class Matrix
 	 *            the low value.
 	 * @param high
 	 *            the high value.
+	 * @return this object, for chaining calls.
 	 */
-	public void normalize(double low, double high)
+	public Matrix normalize(double low, double high)
 	{
 		checkArgument(Double.isFinite(low),
 				"low value must be finite");
@@ -360,6 +366,7 @@ public class Matrix
 		
 		for(int i = 0; i < size; i++)
 			data[i] = (data[i] - min) / dataRange * outRange + low;
+		return this;
 	}
 	
 	/**
