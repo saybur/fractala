@@ -253,7 +253,7 @@ public final class Layer implements Projection
 	}
 	
 	@Override
-	public Matrix call() throws Exception
+	public Matrix call()
 	{
 		Projection.Task task = new Projection.Task(this);
 		return task.call();
