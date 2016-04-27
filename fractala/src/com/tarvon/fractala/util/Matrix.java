@@ -33,6 +33,7 @@ import java.util.Spliterator;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.RecursiveAction;
 import java.util.function.DoubleToIntFunction;
+import java.util.function.DoubleUnaryOperator;
 import java.util.function.ToDoubleFunction;
 import java.util.stream.DoubleStream;
 import java.util.stream.StreamSupport;
@@ -389,6 +390,32 @@ public class Matrix
 		this.width = width;
 		this.height = height;
 		this.data = data;
+	}
+	
+	/**
+	 * Applies the given operator to each value of the <code>Matrix</code> and
+	 * provides the result as a new <code>Matrix</code>.
+	 * 
+	 * @param operator
+	 *            the operator to apply.
+	 * @return the new <code>Matrix</code>.
+	 */
+	public Matrix apply(DoubleUnaryOperator operator)
+	{
+		Preconditions.checkNotNull(operator, "operator");
+		
+		// make a copy of the internal data
+		final double[] copy = new double[data.length];
+		System.arraycopy(data, 0, copy, 0, data.length);
+		
+		// apply the operator
+		for(int i = 0; i < copy.length; i++)
+		{
+			copy[i] = operator.applyAsDouble(copy[i]);
+		}
+		
+		// then provide results
+		return new Matrix(width, height, copy);
 	}
 	
 	/**
