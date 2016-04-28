@@ -96,7 +96,7 @@ public class Fractals
 	public static Fractal createCellularFractal(long seed, int power)
 	{
 		pool.populate(power);
-		final Random random = new Random();
+		final Random random = new Random(seed);
 		final Point3D origin = randomOrigin(random);
 		return Fractal.builder()
 				.usePool(pool)
@@ -145,7 +145,7 @@ public class Fractals
 	public static Fractal createSimplexFractal(long seed, int power)
 	{
 		pool.populate(power);
-		final Random random = new Random();
+		final Random random = new Random(seed);
 		final Point3D origin = randomOrigin(random);
 		return Fractal.builder()
 				.usePool(pool)
