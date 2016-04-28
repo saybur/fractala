@@ -19,6 +19,8 @@ import javax.swing.JSpinner;
 import javax.swing.JTextField;
 import javax.swing.SpinnerNumberModel;
 
+import com.tarvon.fractala.Fractals;
+
 /**
  * Graphical utility to help select {@link ColorChooser} values.
  * 
@@ -35,7 +37,7 @@ public class ColorHelper
 		public ColorPanel()
 		{
 			setOpaque(true);
-			setPreferredSize(new Dimension(100, 600));
+			setPreferredSize(new Dimension(1024, 512));
 		}
 		
 		@Override
@@ -59,30 +61,22 @@ public class ColorHelper
 				return;
 			}
 			
-			// get maximum draw
-			final double maxValue = ((Double) maxSpinner.getValue())
-					.doubleValue();
+			// get seed
+			final int seed = ((Integer) seedSpinner.getValue())
+					.intValue();
 			
-			// create drawing image
-			final BufferedImage image = new BufferedImage(width, height,
-					BufferedImage.TYPE_INT_RGB);
-			for(int y = 0; y < height; y++)
-			{
-				double n = y / (double) height;
-				n *= maxValue;
-				
-				int color = chooser.applyAsInt(n);
-				for(int x = 0; x < width; x++)
-					image.setRGB(x, y, color);
-			}
-			
-			// then draw
+			// draw
+			final BufferedImage image = Fractals
+					.createSimplexFractal(seed, 10)
+					.call()
+					.normalize(0, MAX)
+					.toImage(chooser);
 			g.drawImage(image, 0, 0, null);
 		}
 	}
 	
 	private static final int ROWS = 16;
-	private static final double MAX_RANGE = 10.0;
+	private static final double MAX = 100.0;
 	private static final Color ERROR_COLOR = new Color(255, 200, 200);
 	private static final Color GOOD_COLOR = new Color(255, 255, 255);
 	
@@ -106,7 +100,7 @@ public class ColorHelper
 	}
 	
 	private final JFrame frame;
-	private final JSpinner maxSpinner;
+	private final JSpinner seedSpinner;
 	private final List<JSpinner> spinners;
 	private final List<JTextField> fields;
 	private final ColorPanel colorPanel;
@@ -126,9 +120,8 @@ public class ColorHelper
 				.map(i ->
 				{
 					final JSpinner spinner = new JSpinner(new SpinnerNumberModel(
-							0.0, 0.0, MAX_RANGE, 0.001));
+							0.0, 0.0, MAX, 0.01));
 					spinner.setBackground(ERROR_COLOR);
-					spinner.addChangeListener(e -> update());
 					spinner.setPreferredSize(new Dimension(
 							100,
 							spinner.getPreferredSize().height));
@@ -151,7 +144,7 @@ public class ColorHelper
 		// put a few defaults in
 		spinners.get(0).setValue(0.0);
 		fields.get(0).setText("#000000");
-		spinners.get(1).setValue(1.0);
+		spinners.get(1).setValue(MAX);
 		fields.get(1).setText("#FFFFFF");
 		
 		// create table of entry objects
@@ -165,10 +158,10 @@ public class ColorHelper
 		frame.getContentPane().add(entryPanel);
 		
 		// the maximum spinner
-		maxSpinner = new JSpinner(new SpinnerNumberModel(
-				1.0, 1.0, MAX_RANGE, 0.1));
-		maxSpinner.addChangeListener(e -> update());
-		frame.getContentPane().add(maxSpinner, BorderLayout.NORTH);
+		seedSpinner = new JSpinner(new SpinnerNumberModel(
+				1000, 1, Integer.MAX_VALUE, 1));
+		seedSpinner.addChangeListener(e -> update());
+		frame.getContentPane().add(seedSpinner, BorderLayout.NORTH);
 		
 		// redrawing button
 		final JButton redrawButton = new JButton("Redraw");
