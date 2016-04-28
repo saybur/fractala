@@ -23,15 +23,19 @@
  */
 package com.tarvon.fractala.projection;
 
+import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import com.google.common.base.MoreObjects;
-import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.tarvon.fractala.noise.NoiseSource;
 import com.tarvon.fractala.util.Point3D;
 import com.tarvon.fractala.util.ProjectionPool;
 import com.tarvon.fractala.util.Matrix;
+
+import static com.google.common.base.Preconditions.*;
 
 /**
  * Class that creates a fractal data set.
@@ -51,6 +55,20 @@ import com.tarvon.fractala.util.Matrix;
  */
 public class Fractal implements Projection
 {
+	/**
+	 * Builder for the {@link Fractal} class.
+	 * <p>
+	 * This does not implement <code>equals(Object)</code> or
+	 * <code>hashCode(Object)</code>. Instances of this object should not be
+	 * shared between different threads, or away from the thread that calls
+	 * {@link #create()}.
+	 * <p>
+	 * This allows any value in the <code>useX()</code> methods (including
+	 * <code>null</code>) and checks for correctness in {@link #create()}.
+	 * 
+	 * @author saybur
+	 *
+	 */
 	public static final class Builder
 	{
 		private NoiseSource source;
@@ -60,6 +78,7 @@ public class Fractal implements Projection
 		private int power;
 		private double persistance;
 		private int octaves;
+		private IntStream octavesStream;
 		
 		private Builder()
 		{
@@ -70,21 +89,22 @@ public class Fractal implements Projection
 
 		public Fractal create()
 		{
-			// verify inputs
-			final NoiseSource sourceLocal = Preconditions.checkNotNull(source,
-					"noise source must be set");
-			final Point3D originLocal = Preconditions.checkNotNull(origin,
-					"origin point within noise must be set");
-			final int powerLocal = power;
-			Preconditions.checkArgument(powerLocal > 0,
-					"power must be equal to or greater than 1");
-			final double persistenceLocal = persistance;
-			Preconditions.checkArgument(persistenceLocal >= 0.0
-					&& persistenceLocal <= 1.0,
-					"persistence must be on [0.0, 1.0]");
-			final int octavesLocal = octaves;
-			Preconditions.checkArgument(octaves > 0,
-					"octaves must be equal to or greater than 1");
+			// verify power
+			final int powerLocal = this.power;
+			checkArgument(powerLocal >= 2,
+					"power must be equal to or greater than 2");
+			
+			// do octaves
+			final List<Integer> octavesList;
+			if(octavesStream != null)
+			{
+				octavesList = octavesStream.boxed().collect(Collectors.toList());
+			}
+			else
+			{
+				octavesList = IntStream.range(0, Math.max(1, octaves))
+						.boxed().collect(Collectors.toList());
+			}
 			
 			// see if there is a pool, and if not, we need to make one
 			// and ensure it has what we need it to have
@@ -95,24 +115,24 @@ public class Fractal implements Projection
 			}
 			if(! poolLocal.contains(powerLocal))
 			{
-				poolLocal.populate(power);
+				poolLocal.populate(powerLocal);
 			}
 			
 			// and get a possibly null filters reference
 			final ImmutableList<ProjectionFilter> filtersLocal = filters;
 			
 			// construct projections
-			ImmutableList.Builder<Projection> projections =
+			final ImmutableList.Builder<Projection> projections =
 					ImmutableList.builder();
-			for(int i = 0; i < octavesLocal; i++)
+			for(Integer i : octavesList)
 			{
 				// calculate frequency/amplitude for each projection
 				int frequency = (int) Math.pow(2, i);
-				double amplitude = Math.pow(persistenceLocal, i);
+				double amplitude = Math.pow(persistance, i);
 				// build the projection's base values
 				Layer.Builder layer = Layer.builder()
-						.useNoise(sourceLocal)
-						.useOrigin(originLocal)
+						.useNoise(source)
+						.useOrigin(origin)
 						.usePower(powerLocal)
 						.usePool(poolLocal)
 						.useFrequency(frequency)
@@ -145,6 +165,12 @@ public class Fractal implements Projection
 		public Builder useOctaves(int octaves)
 		{
 			this.octaves = octaves;
+			return this;
+		}
+		
+		public Builder useOctaves(IntStream octaves)
+		{
+			this.octavesStream = octaves;
 			return this;
 		}
 
@@ -196,20 +222,17 @@ public class Fractal implements Projection
 
 	private Fractal(ImmutableList<Projection> projectionsPassed)
 	{
-		// shallow copy provided projections to prevent list meddling
-		projections = Preconditions.checkNotNull(projectionsPassed,
-				"projections cannot be null");
+		projections = checkNotNull(projectionsPassed, "projections");
+		
 		// verify that the projections make sense
-		Preconditions.checkArgument(projections.size() > 0,
-				"List of projections must have at least 1 projection in it");
+		checkArgument(projections.size() > 0, "projections list was empty");
 		power = projections.get(0).getPower();
 		for(int i = 1; i < projections.size(); i++)
 		{
-			if(projections.get(i).getPower() != power)
-			{
-				throw new IllegalArgumentException("The power of the provided "
-						+ "projections must all be identical");
-			}
+			int pPow = projections.get(i).getPower();
+			checkArgument(pPow == power,
+					"projections power mismatch: %s vs %s",
+					pPow, power);
 		}
 	}
 
