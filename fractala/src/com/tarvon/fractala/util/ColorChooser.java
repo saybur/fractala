@@ -34,6 +34,8 @@ import java.util.function.DoubleToIntFunction;
 
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
+import com.google.common.primitives.Doubles;
 
 /**
  * Class that helps pick out colors for a {@link Matrix} object.
@@ -388,6 +390,22 @@ public final class ColorChooser implements DoubleToIntFunction
 	public int hashCode()
 	{
 		return Objects.hash(count, keys, colors);
+	}
+
+	/**
+	 * @return the keys for this chooser.
+	 */
+	public ImmutableList<Double> keys()
+	{
+		return ImmutableList.copyOf(Doubles.asList(keys));
+	}
+
+	/**
+	 * @return the number of color stops within this chooser.
+	 */
+	public int size()
+	{
+		return keys.length;
 	}
 	
 	@Override
