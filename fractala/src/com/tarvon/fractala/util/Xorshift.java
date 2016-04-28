@@ -116,6 +116,11 @@ public final class Xorshift
 					+ SEED_TABLE_SPACE];
 			this.z = seeds[(int) (Math.abs(z) % SEED_TABLE_SPACE)
 					+ SEED_TABLE_SPACE + SEED_TABLE_SPACE];
+			
+			// decreases spherical artifacts, but obviously is slow
+			// TODO replace by fixing underlying issue
+			for(int i = 0; i < 5; i++)
+				nextLong();
 		}
 	}
 
