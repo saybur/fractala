@@ -303,7 +303,7 @@ public class Matrix
 	{
 		return stream().max().getAsDouble();
 	}
-
+	
 	/**
 	 * Provides the minimum value of this table.
 	 * <p>
@@ -361,6 +361,23 @@ public class Matrix
 		for(int i = 0; i < size; i++)
 			data[i] = (data[i] - min) / dataRange * outRange + low;
 		return this;
+	}
+
+	/**
+	 * Provides the two-dimensional position of the given array index.
+	 * 
+	 * @param index
+	 *            the index to retrieve.
+	 * @return the position of the given index.
+	 */
+	public IntPoint position(int index)
+	{
+		checkArgument(index >= 0 && index < size,
+				"index not in bounds [0, %d], was [%s]",
+				size, index);
+		final int y = index / width;
+		final int x = index - width * y;
+		return new IntPoint(x, y);
 	}
 	
 	/**
