@@ -27,12 +27,13 @@ import java.util.Iterator;
 import java.util.Objects;
 
 import com.google.common.base.MoreObjects;
-import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.tarvon.fractala.noise.NoiseSource;
 import com.tarvon.fractala.util.Point3D;
 import com.tarvon.fractala.util.ProjectionPool;
 import com.tarvon.fractala.util.Matrix;
+
+import static com.google.common.base.Preconditions.*;
 
 /**
  * Defines the default implementation for handling transforms between noise
@@ -85,9 +86,8 @@ public final class Layer implements Projection
 		
 		private Builder(Layer o)
 		{
-			Preconditions.checkNotNull(o,
-					"Cannot create a Builder from a null object.");
-		
+			checkNotNull(o, "cannot create a Builder from a null object.");
+
 			noise = o.noise;
 			power = o.power;
 			origin = o.origin;
@@ -191,11 +191,9 @@ public final class Layer implements Projection
 	{
 		super();
 		
-		noise = Preconditions.checkNotNull(b.noise,
-				"noise must not be null");
+		noise = checkNotNull(b.noise, "noise");
 		power = b.power;
-		origin = Preconditions.checkNotNull(b.origin,
-				"origin must not be null");
+		origin = checkNotNull(b.origin, "origin");
 		frequency = b.frequency;
 		amplitude = b.amplitude;
 		if(b.filters == null)
@@ -204,15 +202,14 @@ public final class Layer implements Projection
 		}
 		else
 		{
-			filters = Preconditions.checkNotNull(b.filters,
-					"filters must not be null");
+			filters = checkNotNull(b.filters,
+					"filters");
 		}
-		pool = Preconditions.checkNotNull(b.pool,
-				"pool must not be null");
+		pool = checkNotNull(b.pool, "pool");
 		
-		Preconditions.checkArgument(power > 0,
-				"power must be equal to or greater than 1");
-		Preconditions.checkArgument(pool.contains(power),
+		checkArgument(power >= 2,
+				"power must be equal to or greater than 2");
+		checkArgument(pool.contains(power),
 				"pool must contain information for power %s", power);
 	}
 	
@@ -288,7 +285,8 @@ public final class Layer implements Projection
 	@Override
 	public int hashCode()
 	{
-		return Objects.hash(noise, power, origin, frequency, amplitude, filters, pool);
+		return Objects.hash(noise, power, origin, frequency, amplitude, filters,
+				pool);
 	}
 
 	@Override
