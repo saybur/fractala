@@ -149,7 +149,7 @@ public class Matrix
 	 *            the width of the table.
 	 * @param height
 	 *            the height of the table.
-	 * @return the <code>Builder</code>.
+	 * @return the new <code>Matrix</code>.
 	 */
 	public static Matrix of(int width, int height)
 	{
@@ -159,6 +159,22 @@ public class Matrix
 				size, MAX_SIZE);
 		
 		return new Matrix(width, height, new double[(int) size]);
+	}
+	
+	/**
+	 * Creates a matrix of the given size, using the given backing array.
+	 * 
+	 * @param width
+	 *            the width of the table.
+	 * @param height
+	 *            the height of the table.
+	 * @param data
+	 *            the data.
+	 * @return the new <code>Matrix</code>.
+	 */
+	public static Matrix of(int width, int height, double[] data)
+	{
+		return new Matrix(width, height, data);
 	}
 	
 	/**
@@ -468,7 +484,7 @@ public class Matrix
 		img.setData(raster);
 		return img;
 	}
-	
+
 	/**
 	 * Decodes the data into a multicolor image of
 	 * {@link BufferedImage#TYPE_INT_ARGB}.
@@ -503,6 +519,37 @@ public class Matrix
 		// stuff and just copy the array contents directly
 		BufferedImage image = new BufferedImage(width, height,
 				BufferedImage.TYPE_INT_ARGB);
+		int[] imageData = ((DataBufferInt) image.getRaster().getDataBuffer())
+				.getData();
+		System.arraycopy(scaled, 0, imageData, 0, imageData.length);
+		return image;
+	}
+
+	/**
+	 * Decodes the data into a multicolor image of type
+	 * {@link BufferedImage#TYPE_INT_RGB}.
+	 * <p>
+	 * This is identical to {@link #toImage(DoubleToIntFunction)} except for the
+	 * result image type. The converter function should be appropriately
+	 * modified, if needed.
+	 * 
+	 * @param type
+	 *            the desired data type of the result image.
+	 * @param converter
+	 *            the color generation function as described, which must be
+	 *            non-interfering for parallel usage (as described).
+	 * @return the constructed image.
+	 */
+	public BufferedImage toOpaqueImage(DoubleToIntFunction converter)
+	{
+		checkNotNull(converter, "converter cannot be null");
+		
+		final int[] scaled = stream()
+				.mapToInt(converter)
+				.toArray();
+		
+		BufferedImage image = new BufferedImage(width, height,
+				BufferedImage.TYPE_INT_RGB);
 		int[] imageData = ((DataBufferInt) image.getRaster().getDataBuffer())
 				.getData();
 		System.arraycopy(scaled, 0, imageData, 0, imageData.length);
