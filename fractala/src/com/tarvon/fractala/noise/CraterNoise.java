@@ -36,25 +36,8 @@ public final class CraterNoise implements NoiseSource
 	 */
 	public static final DoubleBinaryOperator DEFAULT_VALUE_FUNCTION = (d, x) ->
 	{
-		final double distance = Math.sqrt(d) * (x + 1);
-		if(distance > 0.5)
-		{
-			return Math.max(1 - (distance - 0.5) * 3, 0.0);
-		}
-		else
-		{
-			return 1 - (distance - 0.5) * -8;
-		}
-	};
-	
-	/**
-	 * Function similar to {@link #DEFAULT_VALUE_FUNCTION}, but this avoids
-	 * using <code>Math.sqrt(double)</code> so it should be faster.
-	 */
-	public static final DoubleBinaryOperator FAST_VALUE_FUNCTION = (d, x) ->
-	{
 		final double distance = d * 4 * (x + 1);
-		
+
 		if(distance > 0.5)
 		{
 			return Math.max(1 - (distance - 0.5) * 1.5, 0.0);
