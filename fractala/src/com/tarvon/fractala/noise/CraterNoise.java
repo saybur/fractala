@@ -4,8 +4,11 @@
 package com.tarvon.fractala.noise;
 
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.function.DoubleBinaryOperator;
 
 import com.tarvon.fractala.util.Xorshift;
+
+import static com.google.common.base.Preconditions.*;
 
 /**
  * Implements a random placement crater system for fractal surfaces. This is
@@ -16,13 +19,111 @@ import com.tarvon.fractala.util.Xorshift;
  * cellular minimum distance, instead treats voxel coordinates as an impact
  * crater and tries to determine the value based on the distance from the
  * center.
+ * <p>
+ * To provide additional flexibility, this allows the value function that
+ * generates the cratering effect to be replaced by the user. The function
+ * accepts two <code>double</code> values: the first is the squared distance to
+ * a given voxel, and the second is a random value from 0 to 1. Return values
+ * are up to the user.
  * 
  * @author saybur
  * 
  */
 public final class CraterNoise implements NoiseSource
 {
-	private static double calculate(Xorshift.Instance r, double xf, double yf, double zf)
+	/**
+	 * The default value function.
+	 */
+	public static final DoubleBinaryOperator DEFAULT_VALUE_FUNCTION = (d, x) ->
+	{
+		final double distance = Math.sqrt(d) * (x + 1);
+		if(distance > 0.5)
+		{
+			return Math.max(1 - Math.abs((distance - 0.5) * 3), 0.0);
+		}
+		else
+		{
+			return 1 - Math.abs((distance - 0.5) * 8);
+		}
+	};
+
+	private static double distanceSquared(double xa, double ya, double za,
+			double xb, double yb, double zb)
+	{
+		double x2 = xa - xb;
+		double y2 = ya - yb;
+		double z2 = za - zb;
+		return x2 * x2 + y2 * y2 + z2 * z2;
+	}
+	
+	private static int floor(double n)
+	{
+		return n > 0 ? (int) n : (int) n - 1;
+	}
+	
+	/**
+	 * Creates a new noise instance with a random seed value.
+	 * 
+	 * @return the new noise instance.
+	 */
+	public static CraterNoise getInstance()
+	{
+		return new CraterNoise(ThreadLocalRandom.current().nextLong(),
+				DEFAULT_VALUE_FUNCTION);
+	}
+
+	/**
+	 * Creates a new noise instance with a random seed value, and a given value
+	 * function.
+	 * 
+	 * @param function
+	 *            the value function.
+	 * @return the new noise instance.
+	 */
+	public static CraterNoise getInstance(DoubleBinaryOperator function)
+	{
+		return new CraterNoise(ThreadLocalRandom.current().nextLong(),
+				function);
+	}
+	
+	/**
+	 * Creates a new noise instance with the specified seed value.
+	 * 
+	 * @param seed
+	 *            the seed value.
+	 * @return the new noise instance.
+	 */
+	public static CraterNoise getInstance(long seed)
+	{
+		return new CraterNoise(seed, DEFAULT_VALUE_FUNCTION);
+	}
+
+	/**
+	 * Creates a new noise instance with the specified seed value, and a given
+	 * value function.
+	 * 
+	 * @param seed
+	 *            the seed.
+	 * @param function
+	 *            the value function.
+	 * @return the new noise instance.
+	 */
+	public static CraterNoise getInstance(long seed, DoubleBinaryOperator function)
+	{
+		return new CraterNoise(seed, function);
+	}
+
+	private final Xorshift randomFactory;
+	private final DoubleBinaryOperator valueFunction;
+
+	private CraterNoise(long seed, DoubleBinaryOperator function)
+	{
+		randomFactory = Xorshift.create(seed);
+		valueFunction = checkNotNull(function, "function");
+	}
+	
+	private double calculate(Xorshift.Instance r, double xf, double yf,
+			double zf)
 	{
 		// hack, but easier than handling points that are exactly at negative
 		// integer latice-points correctly.
@@ -49,40 +150,26 @@ public final class CraterNoise implements NoiseSource
 		return s;
 	}
 
-	private static double distanceSquared(double xa, double ya, double za,
-			double xb, double yb, double zb)
+	@Override
+	public double coherentNoise(double x, double y, double z)
 	{
-		double x2 = xa - xb;
-		double y2 = ya - yb;
-		double z2 = za - zb;
-		return x2 * x2 + y2 * y2 + z2 * z2;
-	}
-	
-	private static int floor(double n)
-	{
-		return n > 0 ? (int) n : (int) n - 1;
-	}
-	
-	/**
-	 * Creates a new noise instance with a random seed value.
-	 * 
-	 * @return the new noise instance.
-	 */
-	public static CraterNoise getInstance()
-	{
-		return new CraterNoise(ThreadLocalRandom.current().nextLong());
+		return noise(x, y, z);
 	}
 
 	/**
-	 * Creates a new noise instance with the specified seed value.
+	 * Provides a noise value at a given coordinate.
 	 * 
-	 * @param seed
-	 *            the seed value.
-	 * @return the new noise instance.
+	 * @param x
+	 *            the x coordinate of the point to get noise at.
+	 * @param y
+	 *            the y coordinate of the point to get noise at.
+	 * @param z
+	 *            the z coordinate of the point to get noise at.
+	 * @return the noise value at the given point.
 	 */
-	public static CraterNoise getInstance(long seed)
+	public double noise(double x, double y, double z)
 	{
-		return new CraterNoise(seed);
+		return calculate(randomFactory.getInstance(), x, y, z);
 	}
 
 	/**
@@ -106,7 +193,7 @@ public final class CraterNoise implements NoiseSource
 	 * @return the sum of the distances to the voxel's points, plus the value
 	 *         provided for storage.
 	 */
-	private static double processVoxel(Xorshift.Instance r,
+	private double processVoxel(Xorshift.Instance r,
 			double xf, double yf, double zf,
 			int x, int y, int z)
 	{
@@ -120,61 +207,7 @@ public final class CraterNoise implements NoiseSource
 		// determine the distance between the generated point
 		// and the source point we're checking. then get the value
 		double distance = distanceSquared(xf, yf, zf, nx, ny, nz);
-		double value = value(Math.sqrt(distance), magnitude);
+		double value = valueFunction.applyAsDouble(distance, magnitude);
 		return value;
-	}
-	
-	/**
-	 * Determines the relative value of a point at a given distance from a
-	 * crater center with the provided magnitude.
-	 * <p>
-	 * This is what creates the ring effect.
-	 * 
-	 * @param distance
-	 *            the distance between the two points.
-	 * @param magnitude
-	 *            the magnitude of the crater, from 1 to 2.
-	 * @return the value based on the parameters.
-	 */
-	private static double value(double distance, double magnitude)
-	{
-		distance = distance * magnitude;
-		if(distance > 0.5)
-		{
-			return Math.max(1 - Math.abs((distance - 0.5) * 3), 0.0);
-		}
-		else
-		{
-			return 1 - Math.abs((distance - 0.5) * 8);
-		}
-	}
-
-	private final Xorshift randomFactory;
-
-	private CraterNoise(long seed)
-	{
-		randomFactory = Xorshift.create(seed);
-	}
-
-	@Override
-	public double coherentNoise(double x, double y, double z)
-	{
-		return noise(x, y, z);
-	}
-
-	/**
-	 * Provides a noise value at a given coordinate.
-	 * 
-	 * @param x
-	 *            the x coordinate of the point to get noise at.
-	 * @param y
-	 *            the y coordinate of the point to get noise at.
-	 * @param z
-	 *            the z coordinate of the point to get noise at.
-	 * @return the noise value at the given point.
-	 */
-	public double noise(double x, double y, double z)
-	{
-		return calculate(randomFactory.getInstance(), x, y, z);
 	}
 }
