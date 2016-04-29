@@ -4,6 +4,7 @@ import java.awt.EventQueue;
 import java.awt.Graphics;
 
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JColorChooser;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
@@ -106,6 +107,8 @@ public class ColorHelper
 	private final JSpinner seedSpinner;
 	private final List<JSpinner> spinners;
 	private final List<JTextField> fields;
+	private final List<JCheckBox> checkboxes;
+	private final List<JButton> buttons;
 	private final ColorPanel colorPanel;
 	
 	private final JDialog colorChooserDialog;
@@ -137,6 +140,7 @@ public class ColorHelper
 					final JSpinner spinner = new JSpinner(new SpinnerNumberModel(
 							0.0, 0.0, MAX, 0.1));
 					spinner.setBackground(ERROR_COLOR);
+					spinner.addChangeListener(e -> update());
 					spinner.setPreferredSize(new Dimension(
 							80,
 							spinner.getPreferredSize().height));
@@ -155,12 +159,35 @@ public class ColorHelper
 					return field;
 				})
 				.collect(Collectors.toList());
-		final List<JButton> buttons = fields.stream()
+		checkboxes = IntStream.range(0, ROWS).boxed()
+				.map(i ->
+				{
+					final JCheckBox checkbox = new JCheckBox("?");
+					checkbox.setSelected(true);
+					checkbox.addActionListener(e -> update());
+					return checkbox;
+				})
+				.collect(Collectors.toList());
+		buttons = fields.stream()
 				.map(f ->
 				{
 					final JButton button = new JButton("...");
+					button.setBackground(Color.BLACK);
 					button.addActionListener(e -> chooseColor(f));
 					return button;
+				})
+				.collect(Collectors.toList());
+		final List<JPanel> panels = IntStream.range(0, ROWS).boxed()
+				.map(i ->
+				{
+					final JButton b = buttons.get(i);
+					final JCheckBox c = checkboxes.get(i);
+					
+					final JPanel panel = new JPanel();
+					panel.setLayout(new GridLayout(1, 2));
+					panel.add(b);
+					panel.add(c);
+					return panel;
 				})
 				.collect(Collectors.toList());
 		
@@ -177,7 +204,7 @@ public class ColorHelper
 		{
 			entryPanel.add(spinners.get(i));
 			entryPanel.add(fields.get(i));
-			entryPanel.add(buttons.get(i));
+			entryPanel.add(panels.get(i));
 		}
 		frame.getContentPane().add(entryPanel);
 		
@@ -232,6 +259,9 @@ public class ColorHelper
 				c = Strings.padStart(c, 6, '0');
 			}
 			f.setText("#" + c);
+			
+			// update gui post return
+			update();
 		}
 	}
 	
@@ -240,8 +270,10 @@ public class ColorHelper
 		final ColorChooser.Builder b = ColorChooser.builder();
 		for(int i = 0; i < ROWS; i++)
 		{
+			final JCheckBox chbx = checkboxes.get(i);
 			final JSpinner spinner = spinners.get(i);
 			final JTextField field = fields.get(i);
+			final JButton button = buttons.get(i);
 			
 			// fetch color or error
 			final Color color;
@@ -249,12 +281,18 @@ public class ColorHelper
 			{
 				color = Color.decode(field.getText());
 				field.setBackground(GOOD_COLOR);
+				button.setBackground(color);
 			}
 			catch(Exception e)
 			{
 				field.setBackground(ERROR_COLOR);
+				button.setBackground(Color.BLACK);
 				continue;
 			}
+			
+			// now skip if disabled
+			if(! chbx.isSelected())
+				continue;
 						
 			// fetch value or error
 			final double value;
