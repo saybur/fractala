@@ -4,6 +4,8 @@ import java.awt.EventQueue;
 import java.awt.Graphics;
 
 import javax.swing.JButton;
+import javax.swing.JColorChooser;
+import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import java.awt.BorderLayout;
@@ -19,6 +21,7 @@ import javax.swing.JSpinner;
 import javax.swing.JTextField;
 import javax.swing.SpinnerNumberModel;
 
+import com.google.common.base.Strings;
 import com.tarvon.fractala.Fractals;
 
 /**
@@ -105,25 +108,37 @@ public class ColorHelper
 	private final List<JTextField> fields;
 	private final ColorPanel colorPanel;
 	
+	private final JDialog colorChooserDialog;
+	private final JColorChooser colorChooser;
+	private boolean colorChooserOk;
+	
 	public ColorHelper()
 	{
 		frame = new JFrame("Color Helper");
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frame.pack();
 		
-		// make the color panel
+		// make the color panel, and the chooser
 		colorPanel = new ColorPanel();
 		frame.getContentPane().add(colorPanel, BorderLayout.EAST);
+		colorChooser = new JColorChooser();
+		colorChooserDialog = JColorChooser.createDialog(frame,
+				"Choose Color",
+				true,
+				colorChooser,
+				e -> colorChooserOk = true,
+				null);
+		colorChooserOk = false;
 		
 		// create GUI elements
 		spinners = IntStream.range(0, ROWS).boxed()
 				.map(i ->
 				{
 					final JSpinner spinner = new JSpinner(new SpinnerNumberModel(
-							0.0, 0.0, MAX, 0.01));
+							0.0, 0.0, MAX, 0.1));
 					spinner.setBackground(ERROR_COLOR);
 					spinner.setPreferredSize(new Dimension(
-							100,
+							80,
 							spinner.getPreferredSize().height));
 					return spinner;
 				})
@@ -135,9 +150,17 @@ public class ColorHelper
 					field.setBackground(ERROR_COLOR);
 					field.addActionListener(e -> update());
 					field.setPreferredSize(new Dimension(
-							100,
+							80,
 							field.getPreferredSize().height));
 					return field;
+				})
+				.collect(Collectors.toList());
+		final List<JButton> buttons = fields.stream()
+				.map(f ->
+				{
+					final JButton button = new JButton("...");
+					button.addActionListener(e -> chooseColor(f));
+					return button;
 				})
 				.collect(Collectors.toList());
 		
@@ -149,15 +172,16 @@ public class ColorHelper
 		
 		// create table of entry objects
 		final JPanel entryPanel = new JPanel();
-		entryPanel.setLayout(new GridLayout(ROWS, 2, 2, 2));
+		entryPanel.setLayout(new GridLayout(ROWS, 3, 2, 2));
 		for(int i = 0; i < ROWS; i++)
 		{
 			entryPanel.add(spinners.get(i));
 			entryPanel.add(fields.get(i));
+			entryPanel.add(buttons.get(i));
 		}
 		frame.getContentPane().add(entryPanel);
 		
-		// the maximum spinner
+		// the seed spinner
 		seedSpinner = new JSpinner(new SpinnerNumberModel(
 				1000, 1, Integer.MAX_VALUE, 1));
 		seedSpinner.addChangeListener(e -> update());
@@ -170,6 +194,45 @@ public class ColorHelper
 		
 		update();
 		frame.pack();
+	}
+	
+	private void chooseColor(JTextField f)
+	{
+		// pick existing field color
+		Color prev;
+		try
+		{
+			prev = Color.decode(f.getText());
+		}
+		catch(Exception ex)
+		{
+			prev = Color.BLACK;
+		}
+		
+		// let the user pick a color
+		colorChooser.setColor(prev);
+		colorChooserOk = false;
+		colorChooserDialog.setVisible(true);
+		Color picked = colorChooser.getColor();
+		
+		// then assign
+		if(colorChooserOk)
+		{
+			String c = Integer.toHexString(picked.getRGB());
+			if(c.length() == 7)
+			{
+				c = c.substring(1, 7);
+			}
+			else if(c.length() > 7)
+			{
+				c = c.substring(2, 8);
+			}
+			else if(c.length() < 6)
+			{
+				c = Strings.padStart(c, 6, '0');
+			}
+			f.setText("#" + c);
+		}
 	}
 	
 	private void update()
