@@ -72,7 +72,7 @@ public final class Layer implements Projection
 		private NoiseSource noise;
 		private int power;
 		private Point3D origin;
-		private int frequency;
+		private double frequency;
 		private double amplitude;
 		private ImmutableList<ProjectionFilter> filters;
 		private ProjectionPool pool;
@@ -124,7 +124,7 @@ public final class Layer implements Projection
 			return this;
 		}
 		
-		public Builder useFrequency(int frequency)
+		public Builder useFrequency(double frequency)
 		{
 			this.frequency = frequency;
 			return this;
@@ -182,7 +182,7 @@ public final class Layer implements Projection
 	private final NoiseSource noise;
 	private final int power;
 	private final Point3D origin;
-	private final int frequency;
+	private final double frequency;
 	private final double amplitude;
 	private final ImmutableList<ProjectionFilter> filters;
 	private final ProjectionPool pool;
@@ -209,6 +209,11 @@ public final class Layer implements Projection
 		
 		checkArgument(power >= 2,
 				"power must be equal to or greater than 2");
+		checkArgument(frequency > 0,
+				"frequency must be positive, was %s",
+				frequency);
+		checkArgument(Double.isFinite(amplitude),
+				"amplitude must be finite");
 		checkArgument(pool.contains(power),
 				"pool must contain information for power %s", power);
 	}

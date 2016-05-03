@@ -76,6 +76,7 @@ public class Fractal implements Projection
 		private ProjectionPool pool;
 		private ImmutableList<ProjectionFilter> filters;
 		private int power;
+		private double lacunarity;
 		private double persistance;
 		private int octaves;
 		private IntStream octavesStream;
@@ -83,16 +84,23 @@ public class Fractal implements Projection
 		private Builder()
 		{
 			power = 10;
+			lacunarity = 2.0;
 			persistance = 0.5;
 			octaves = 6;
 		}
 
 		public Fractal create()
 		{
-			// verify power
-			final int powerLocal = this.power;
+			// verify power, lacunarity, and persistence
+			final int powerLocal = power;
+			final double lacunarityLocal = lacunarity;
+			final double persistanceLocal = persistance;
 			checkArgument(powerLocal >= 2,
 					"power must be equal to or greater than 2");
+			checkArgument(Double.isFinite(lacunarityLocal),
+					"lacunarity must be finite");
+			checkArgument(Double.isFinite(persistanceLocal),
+					"persistance must be finite");
 			
 			// do octaves
 			final List<Integer> octavesList;
@@ -127,8 +135,8 @@ public class Fractal implements Projection
 			for(Integer i : octavesList)
 			{
 				// calculate frequency/amplitude for each projection
-				int frequency = (int) Math.pow(2, i);
-				double amplitude = Math.pow(persistance, i);
+				double frequency = Math.pow(lacunarityLocal, i);
+				double amplitude = Math.pow(persistanceLocal, i);
 				// build the projection's base values
 				Layer.Builder layer = Layer.builder()
 						.useNoise(source)
@@ -153,6 +161,12 @@ public class Fractal implements Projection
 		public Builder useFilters(ImmutableList<ProjectionFilter> filters)
 		{
 			this.filters = filters;
+			return this;
+		}
+		
+		public Builder useLacunarity(double lacunarity)
+		{
+			this.lacunarity = lacunarity;
 			return this;
 		}
 
